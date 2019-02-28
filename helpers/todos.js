@@ -42,9 +42,9 @@ exports.updateTodo=function(req,res){
 	 var body=_.pick(req.body,['text','isCompleted']);
 	 body.completedAt=null;
 	 if(!body.isCompleted)
-	 	body.isCompleted=false;
+	 	    body.isCompleted=false;
 	 if(body.isCompleted=='true')
-        body.completedAt=new Date().getTime();
+            body.completedAt=new Date().getTime();
 	 Todo.findOneAndUpdate({_id:id},body,{new:true})
 	 .then((updatedTodo)=>{
 	 	res.json(updatedTodo);
