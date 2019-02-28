@@ -1,5 +1,6 @@
 var Todo=require('../models/todos');
 var {ObjectId} = require('mongoose').Types;
+const _=require('lodash');
 
 exports.getTodos=function(req,res){
   Todo.find()
@@ -10,7 +11,7 @@ exports.getTodos=function(req,res){
   })
 }
 exports.postTodo=function(req,res){
-	var body=req.body;
+	var body=_.pick(req.body,['text'])
 	Todo.create(body)
 	.then((todo)=>{
 		res.json(todo);
@@ -37,18 +38,21 @@ exports.getTodo=function(req,res){
 exports.updateTodo=function(req,res){
 	 var id=req.params.id;
 	 if(!ObjectId.isValid(id))
-	 	return res.status(400).send('Bad Request!')
-	 var body=req.body;
+	 	return res.status(400).send('Bad Request!');
+	 var body=_.pick(req.body,['text','isCompleted']);
+	 body.completedAt=null;
+	 if(!body.isCompleted)
+	 	body.isCompleted=false;
+	 if(body.isCompleted=='true')
+        body.completedAt=new Date().getTime();
 	 Todo.findOneAndUpdate({_id:id},body,{new:true})
 	 .then((updatedTodo)=>{
-	 	  if(!updateTodo)
-	 	  	throw new Error('Todo not found!')
-           res.json(updatedTodo);
+	 	res.json(updatedTodo);
 	 })
 	 .catch((error)=>{
            res.status(404).send(error.message);
 	 })
-}
+	}
 exports.deleteTodo=function(req,res){
 	var id=req.params.id;
 	if(!ObjectId.isValid(id))
