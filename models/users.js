@@ -1,6 +1,8 @@
-const mongoose=require('mongoose')
-const jwt=require('jsonwebtoken')
-const validator=require('validator')
+const mongoose=require('mongoose'),
+jwt=require('jsonwebtoken'),
+validator=require('validator'),
+bcrypt=require('bcryptjs'),
+_=require('lodash');
 var userSchema=new mongoose.Schema({
 	email:{
 		type:String,
@@ -30,6 +32,10 @@ var userSchema=new mongoose.Schema({
 	}
 	]
 });
+userSchema.methods.toJSON=function(){
+	var user=this;
+	return _.pick(user,['_id','email']);
+}
 userSchema.methods.generateToken=function(){
 	var user=this;
 	var access='auth';
@@ -44,7 +50,7 @@ userSchema.statics.findByToken=function(token){
 	try {
 		decoded=jwt.verify(token,'abc123')
 	} catch(e) {
-		return Promise.reject(e);
+		return Promise.reject(e); 
 	}
     return User.findOne(
     	{'_id':decoded.id,
@@ -53,7 +59,24 @@ userSchema.statics.findByToken=function(token){
          }
  	)    
 }
+//Mongoose middleware which runs before the database is saved
+//Runs before user.save() method
+userSchema.pre('save', function(next) {
+	var user=this;
+	if(user.isModified('password'))
+	{
+ bcrypt.genSalt(10, function(err, salt) {
+    bcrypt.hash(user.password, salt, function(err, hash) {
+        user.password=hash;
+        next();  //After the next() call,the database would be saved
+        //i.e user.save() would be executed
+    });
+});
+}
+else
+  next();
+});
 userSchema.statics.verifyCredentials=function(){
-	
+
 }
 module.exports=mongoose.model('user',userSchema);

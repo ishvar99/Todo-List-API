@@ -2,11 +2,11 @@ const User=require('../models/users');
 const _=require('lodash');
 const jwt=require('jsonwebtoken')
 exports.addUser=(req,res)=>{
-       var user=_.pick(req.body,['email','password']);
-       User.create(user)
+       var body=_.pick(req.body,['email','password']);
+       User.create(body)
        .then((user)=>{
        	var token=user.generateToken();
-       	var user=_.pick(user,['_id','email']);
+       	//user.toJSON() will return the modified user
        	res.header('x-auth',token).send(user);
        }) 
        .catch((error)=>{
