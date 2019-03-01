@@ -14,6 +14,19 @@ exports.addUser=(req,res)=>{
        })
 }
 exports.verifyUser=(req,res)=>{
-      
+	var body=_.pick(req.body,['email','password'])
+      User.findByCredentials(body)
+      .then((user)=>{
+         if(!user)
+         	res.status(401).send('Authenticaton Failed!')
+         else
+         	res.header('x-auth',user.tokens[0].token).send(user);
+      })
+      .catch((e)=>{
+           res.status(401).send(e);
+      })
+}
+exports.getUser=(req,res)=>{
+	res.send(req.user);
 }
 module.exports=exports;

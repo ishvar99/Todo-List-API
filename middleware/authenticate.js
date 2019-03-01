@@ -13,3 +13,4 @@ var authenticate=function(req,res,next){
         	res.status(401).send(error);
         })
 }
+module.exports=authenticate;

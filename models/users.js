@@ -65,6 +65,7 @@ userSchema.pre('save', function(next) {
 	var user=this;
 	if(user.isModified('password'))
 	{
+//Here first argument 10, is cost factor which means how much time is needed to calculate a single BCrypt hash.
  bcrypt.genSalt(10, function(err, salt) {
     bcrypt.hash(user.password, salt, function(err, hash) {
         user.password=hash;
@@ -72,11 +73,39 @@ userSchema.pre('save', function(next) {
         //i.e user.save() would be executed
     });
 });
+ //The salt is a random value, and should differ for each calculation, 
+ //so the result should hardly ever be the same, even for equal passwords. 
 }
 else
   next();
 });
-userSchema.statics.verifyCredentials=function(){
-
+userSchema.statics.findByCredentials=function(body){
+    var User=this;
+    return User.findOne({email:body.email})
+    .then((user)=>{
+    	if(!user){
+    		return Promise.reject('Invalid Username!')
+    	}
+    	//Since bcrypt doesn't support promises
+    	return new Promise((resolve,reject)=>{
+       bcrypt.compare(body.password,user.password,function(err, res) {
+       if(res)
+      	return resolve(user);
+       else
+      	return reject('Invalid Password!');
+})
+    	})
+    })
 }
 module.exports=mongoose.model('user',userSchema);
+
+//*****HOW BCRYPT WORKS****
+// $2y$10$nOUIs5kJ7naTuTFkBy1veuK0kSxUFXfuaOKdOKf9xYT0KKIGSJwFa
+//  |  |  |                     |
+//  |  |  |                     hash-value = K0kSxUFXfuaOKdOKf9xYT0KKIGSJwFa
+//  |  |  |
+//  |  |  salt = nOUIs5kJ7naTuTFkBy1veu
+//  |  |
+//  |  cost-factor = 10 = 2^10 iterations
+//  |
+//  hash-algorithm = 2y = BCrypt
