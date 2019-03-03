@@ -32,17 +32,16 @@ var userSchema=new mongoose.Schema({
 	}
 	]
 });
-userSchema.methods.toJSON=function(){
-	var user=this;
-	return _.pick(user,['_id','email']);
-}
+// userSchema.methods.toJSON=function(){
+// 	var user=this;
+// 	return _.pick(user,['_id','email']);
+// }
 userSchema.methods.generateToken=function(){
 	var user=this;
 	var access='auth';
 	var token=jwt.sign({id:user._id,access},'abc123').toString();
 	user.tokens.push({token,access});
-	user.save();
-	return token;
+	return user.save().then((token)=>token);
 }
 userSchema.statics.findByToken=function(token){
 	var User=this;
@@ -96,6 +95,17 @@ userSchema.statics.findByCredentials=function(body){
 })
     	})
     })
+}
+userSchema.methods.removeCredentials=function(){
+	var user=this;
+	var token=user.tokens[0].token;
+	return user.update({
+		$pull:{
+			tokens:{
+				token
+			}
+		}
+	})
 }
 module.exports=mongoose.model('user',userSchema);
 
